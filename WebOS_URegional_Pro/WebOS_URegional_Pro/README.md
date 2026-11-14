@@ -30,13 +30,14 @@ npm run build
 
 Vite generará la carpeta `dist`.
 
-## Mejoras incluidas
-- Copilot URegional con diagnóstico guiado de CPU, RAM, almacenamiento, procesos y seguridad.
-- Administrador de Procesos con tareas simuladas y controles de finalizar/reiniciar.
-- Centro de Control con indicadores de CPU, RAM y disco.
-- Terminal con comandos `help`, `status`, `processes` y `theme dark|light`.
-- Recuperación del sistema de archivos si los datos guardados en el navegador están dañados.
-- Proyecto preparado con React, Vite y Tailwind CSS.
+## Funciones
+- Pantalla de arranque y de inicio de sesión (la sesión dura mientras la pestaña esté abierta).
+- Explorador de archivos funcional: navegar, crear, renombrar y eliminar carpetas y archivos.
+- Notas Académicas: abre archivos del explorador y guarda con Ctrl+S.
+- Terminal con `ls`, `cd`, `cat`, `mkdir`, `touch`, `rm`, `echo > archivo`, `ps`, `kill`, `status`, `theme`, `neofetch` e historial con flechas.
+- Administrador de Tareas: cada ventana abierta es un proceso con PID y se puede finalizar.
+- Copilot URegional con respuestas locales sobre procesos, archivos y terminal.
+- Datos guardados en `localStorage` (sistema de archivos y tema).
 
 ## Alcance académico y limitaciones
 WebOS es una simulación que se ejecuta dentro del navegador. No reemplaza Windows,

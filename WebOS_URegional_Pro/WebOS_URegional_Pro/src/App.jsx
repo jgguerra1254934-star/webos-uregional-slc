@@ -8,6 +8,11 @@ import {
   Bot, CloudSun, Bell, Layers, Maximize2, Minimize2, Sparkles, Send,
   GraduationCap, BookOpen, UserCheck, Calendar, Award, Compass, ExternalLink, MapPin, UploadCloud, CheckCircle
 } from 'lucide-react';
+import Boot from './Boot';
+import ExplorerApp from './apps/Explorer';
+import EditorApp from './apps/Editor';
+import TerminalApp from './apps/Terminal';
+import TaskManagerApp from './apps/TaskManager';
 
 // ==========================================
 // LOGO COMPONENT INSPIRED BY THE IMAGE
@@ -105,6 +110,8 @@ export default function App() {
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const [session, setSession] = useState(false);
+  const [editorFile, setEditorFile] = useState(null);
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
   const [maxZIndex, setMaxZIndex] = useState(10);
@@ -179,13 +186,19 @@ export default function App() {
     setActiveWindowId(id);
   };
 
+  const openFile = (parts, name) => {
+    setEditorFile({ parts, name });
+    openApp('editor', 'Notas Académicas', FileText, null);
+  };
+
   const availableApps = [
     { id: 'portal', name: 'Portal Cotzumalguapa', icon: GraduationCap, color: 'from-[#FF5522] to-amber-500 text-white', component: <URegionalPortal /> },
     { id: 'browser', name: 'Sitio Web Región 2', icon: Globe, color: 'from-[#005596] to-sky-400 text-white', component: <Browser /> },
     { id: 'copilot', name: 'Copilot URegional', icon: Bot, color: 'from-amber-400 to-orange-500 text-slate-900', component: <AICopilotURegional /> },
-    { id: 'files', name: 'Archivos', icon: Folder, color: 'from-[#003866] to-[#005596] text-amber-400', component: <FileManager fs={fileSystem} /> },
-    { id: 'editor', name: 'Notas Académicas', icon: FileText, color: 'from-blue-600 to-indigo-600 text-white', component: <TextEditor /> },
-    { id: 'terminal', name: 'Terminal URegional', icon: TerminalIcon, color: 'from-slate-900 to-[#002b50] text-emerald-400 border border-emerald-500/30', component: <Terminal fs={fileSystem} setTheme={setTheme} /> },
+    { id: 'files', name: 'Archivos', icon: Folder, color: 'from-[#003866] to-[#005596] text-amber-400', component: <ExplorerApp fs={fileSystem} setFs={setFileSystem} onOpenFile={openFile} /> },
+    { id: 'editor', name: 'Notas Académicas', icon: FileText, color: 'from-blue-600 to-indigo-600 text-white', component: <EditorApp fs={fileSystem} setFs={setFileSystem} file={editorFile} setFile={setEditorFile} /> },
+    { id: 'terminal', name: 'Terminal URegional', icon: TerminalIcon, color: 'from-slate-900 to-[#002b50] text-emerald-400 border border-emerald-500/30', component: <TerminalApp fs={fileSystem} setFs={setFileSystem} theme={theme} setTheme={setTheme} windows={windows} closeWindow={closeWindow} /> },
+    { id: 'tasks', name: 'Administrador de Tareas', icon: Layers, color: 'from-sky-600 to-[#003866] text-white', component: <TaskManagerApp windows={windows} onClose={closeWindow} onFocus={focusWindow} /> },
     { id: 'calc', name: 'Calculadora', icon: CalcIcon, color: 'from-rose-500 to-pink-600 text-white', component: <Calculator /> },
     { id: 'music', name: 'Radio / Lo-Fi', icon: Music, color: 'from-purple-600 to-pink-500 text-white', component: <MusicPlayer /> },
     { id: 'deploy', name: 'Publicar en Web', icon: UploadCloud, color: 'from-emerald-600 to-teal-500 text-white', component: <DeployGuideApp /> },
@@ -193,6 +206,8 @@ export default function App() {
     { id: 'game', name: 'Snake Arcade', icon: Gamepad2, color: 'from-emerald-500 to-teal-700 text-white', component: <SnakeGame /> },
     { id: 'tictactoe', name: 'Tic-Tac-Toe IA', icon: Sparkles, color: 'from-indigo-600 to-[#FF5522] text-white', component: <TicTacToe /> }
   ];
+
+  if (!session) return <Boot Logo={URegionalLogo} onDone={() => setSession(true)} />;
 
   return (
     <div className={`h-screen w-screen overflow-hidden select-none flex flex-col font-sans ${theme === 'dark' ? 'dark text-slate-100' : 'text-slate-900'}`}>
@@ -329,7 +344,7 @@ export default function App() {
 
         {/* Windows Rendering */}
         {windows.map(win => (
-          <WindowContainer
+          <WindowContainer content={availableApps.find(a => a.id === win.id)?.component}
             key={win.id}
             win={win}
             activeWindowId={activeWindowId}
@@ -468,7 +483,7 @@ export default function App() {
 // ==========================================
 // WINDOW CONTAINER COMPONENT
 // ==========================================
-function WindowContainer({ win, activeWindowId, onFocus, onClose, onMinimize, onMaximize, setWindows }) {
+function WindowContainer({ win, content, activeWindowId, onFocus, onClose, onMinimize, onMaximize, setWindows }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -585,7 +600,7 @@ function WindowContainer({ win, activeWindowId, onFocus, onClose, onMinimize, on
 
       {/* WINDOW CONTENT */}
       <div className="flex-1 overflow-auto text-white relative">
-        {win.content}
+        {content}
       </div>
 
       {/* RESIZE HANDLE */}
@@ -779,6 +794,10 @@ function AICopilotURegional() {
       } else if (userMsg.toLowerCase().includes('carrera') || userMsg.toLowerCase().includes('facultad')) {
         reply = 'Ofrecemos carreras en Derecho, Ciencias Económicas, Ingeniería en Sistemas, Criminología y Humanidades.';
       }
+      const q = userMsg.toLowerCase();
+      if (/lent|cpu|ram|memoria|proces/.test(q)) reply = 'Diagnóstico: abre el Administrador de Tareas, revisa qué ventanas consumen más CPU/RAM y finaliza las que no uses. También puedes escribir "status" o "ps" en la Terminal.';
+      else if (/archivo|carpeta|guardar|nota/.test(q)) reply = 'En Archivos puedes crear carpetas y archivos, renombrarlos o eliminarlos. Doble clic en un archivo lo abre en Notas Académicas, donde puedes guardar con Ctrl+S.';
+      else if (/terminal|comando/.test(q)) reply = 'La Terminal soporta ls, cd, cat, mkdir, touch, rm, echo, ps, kill, status y theme. Escribe "help" para ver la lista completa.';
       setMessages(prev => [...prev, { sender: 'bot', text: reply }]);
     }, 500);
   };
@@ -808,95 +827,6 @@ function AICopilotURegional() {
           <Send className="w-4 h-4" />
         </button>
       </div>
-    </div>
-  );
-}
-
-function Terminal({ fs, setTheme }) {
-  const [logs, setLogs] = useState([
-    'Universidad Regional de Guatemala - Sede Santa Lucía Cotzumalguapa',
-    'Terminal WebOS v3.0 | https://uregionalregion2.edu.gt/'
-  ]);
-  const [input, setInput] = useState('');
-
-  const handleCommand = (e) => {
-    if (e.key === 'Enter') {
-      const cmd = input.trim().toLowerCase();
-      let res = '';
-      if (cmd === 'help') {
-        res = 'Comandos: uregional, site, ls, clear, date, status';
-      } else if (cmd === 'uregional' || cmd === 'site') {
-        res = 'Universidad Regional de Guatemala - Sede Santa Lucía Cotzumalguapa\nPortal Web: https://uregionalregion2.edu.gt/';
-      } else if (cmd === 'ls') {
-        res = fs.children.map(c => c.name).join('   ');
-      } else if (cmd === 'clear') {
-        setLogs([]);
-        setInput('');
-        return;
-      } else if (cmd === 'date') {
-        res = new Date().toLocaleString();
-      } else if (cmd !== '') {
-        res = `Comando no reconocido: "${cmd}". Escribe "help".`;
-      }
-      setLogs(prev => [...prev, `$ ${input}`, res].filter(Boolean));
-      setInput('');
-    }
-  };
-
-  return (
-    <div className="h-full bg-[#00172e] p-3 font-mono text-xs text-emerald-400 flex flex-col">
-      <div className="flex-1 overflow-y-auto space-y-1">
-        {logs.map((l, i) => (
-          <div key={i} className="whitespace-pre-wrap">{l}</div>
-        ))}
-      </div>
-      <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-        <span className="text-[#FF5522] font-bold">uregional-slc@webos:~$</span>
-        <input 
-          type="text" 
-          value={input} 
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleCommand}
-          className="flex-1 bg-transparent text-emerald-400 outline-none"
-          autoFocus
-        />
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// ADDITIONAL APP DEFINITIONS
-// ==========================================
-function FileManager({ fs }) {
-  const [currentFolder, setCurrentFolder] = useState(fs);
-  return (
-    <div className="p-4 bg-[#001d38] h-full text-xs text-slate-200">
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-white/10 font-bold text-[#FF5522]">
-        <Folder className="w-4 h-4" />
-        <span>Directorio: /{currentFolder.name}</span>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        {currentFolder.children && currentFolder.children.map(item => (
-          <div key={item.id} className="p-3 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center gap-1 hover:bg-white/10 transition-colors cursor-pointer">
-            {item.type === 'folder' ? <Folder className="w-8 h-8 text-amber-400" /> : <FileText className="w-8 h-8 text-sky-400" />}
-            <span className="truncate w-full text-center text-[11px] font-medium mt-1">{item.name}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TextEditor() {
-  const [text, setText] = useState('Universidad Regional de Guatemala\nSede Santa Lucía Cotzumalguapa\nhttps://uregionalregion2.edu.gt/\n\nAnotaciones de Clases 2026...');
-  return (
-    <div className="h-full flex flex-col bg-[#001d38] p-2">
-      <textarea 
-        value={text} 
-        onChange={(e) => setText(e.target.value)} 
-        className="w-full h-full bg-[#00172e] border border-white/10 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-[#FF5522] resize-none"
-      />
     </div>
   );
 }
